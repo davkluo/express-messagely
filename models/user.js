@@ -1,12 +1,11 @@
 "use strict";
 
-/** User of the site. */
-
 const bcrypt = require("bcrypt");
 const { BCRYPT_WORK_FACTOR } = require("../config");
 const db = require("../db");
 const { UnauthorizedError, NotFoundError } = require("../expressError");
 
+/** User of the site. */
 class User {
   /** Register new user. Returns
    *    {username, password, first_name, last_name, phone}
@@ -15,23 +14,25 @@ class User {
   static async register({ username, password, first_name, last_name, phone }) {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
-    const join_at = new Date();
-    const last_login_at = new Date();
-
     const result = await db.query(
-      `INSERT INTO users
-        (username, password, first_name, last_name, phone, join_at, last_login_at)
+      `INSERT INTO users(
+          username,
+          password,
+          first_name,
+          last_name,
+          phone,
+          join_at,
+          last_login_at
+        )
         VALUES
-          ($1, $2, $3, $4, $5, $6, $7)
+          ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
         RETURNING username, password, first_name, last_name, phone`,
       [
         username,
         hashedPassword,
         first_name,
         last_name,
-        phone,
-        join_at,
-        last_login_at,
+        phone
       ]
     );
 
@@ -50,33 +51,23 @@ class User {
 
     const user = result.rows[0];
 
-    if (user) {
-      if ((await bcrypt.compare(password, user.password)) === true) {
-        return true;
-      }
-    }
-
-    // throw new UnauthorizedError("Invalid user/password");
-    // Or should we return false here?
-    return false;
+    return user && await bcrypt.compare(password, user.password) === true;
   }
 
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
-    const last_login_at = new Date();
 
     const result = await db.query(
       `UPDATE users
-        SET last_login_at = $1
-        WHERE username = $2
-        RETURNING username, last_login_at`,
-      [last_login_at, username]
+        SET last_login_at = current_timestamp
+        WHERE username = $1
+        RETURNING username`,
+      [username]
     );
+    const user = result.rows[0];
 
-    // Question: Should we test again that the user exists?
-
-    return result.rows[0];
+    if(!user) throw new NotFoundError(`User not found`);
   }
 
   /** All: basic info on all users:

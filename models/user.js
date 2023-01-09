@@ -2,21 +2,18 @@
 
 /** User of the site. */
 
-const bcrypt = require('bcrypt');
-const { BCRYPT_WORK_FACTOR } = require('../config');
-const db = require('../db');
-const { UnauthorizedError, NotFoundError } = require('../expressError');
+const bcrypt = require("bcrypt");
+const { BCRYPT_WORK_FACTOR } = require("../config");
+const db = require("../db");
+const { UnauthorizedError, NotFoundError } = require("../expressError");
 
 class User {
-
   /** Register new user. Returns
    *    {username, password, first_name, last_name, phone}
    */
 
   static async register({ username, password, first_name, last_name, phone }) {
-    const hashedPassword = await bcrypt.hash(
-      password, BCRYPT_WORK_FACTOR
-    );
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
     const join_at = new Date();
     const last_login_at = new Date();
@@ -27,7 +24,15 @@ class User {
         VALUES
           ($1, $2, $3, $4, $5, $6, $7)
         RETURNING username, password, first_name, last_name, phone`,
-      [username, hashedPassword, first_name, last_name, phone, join_at, last_login_at]
+      [
+        username,
+        hashedPassword,
+        first_name,
+        last_name,
+        phone,
+        join_at,
+        last_login_at,
+      ]
     );
 
     return result.rows[0];
@@ -46,14 +51,14 @@ class User {
     const user = result.rows[0];
 
     if (user) {
-      if (await bcrypt.compare(password, user.password) === true) {
+      if ((await bcrypt.compare(password, user.password)) === true) {
         return true;
       }
     }
 
-    throw new UnauthorizedError('Invalid user/password');
+    // throw new UnauthorizedError("Invalid user/password");
     // Or should we return false here?
-    // return false;
+    return false;
   }
 
   /** Update last_login_at for user */
@@ -120,6 +125,37 @@ class User {
    */
 
   static async messagesFrom(username) {
+    const result = await db.query(
+      `SELECT m.id,
+          m.body,
+          m.sent_at,
+          m.read_at,
+          u.username,
+          u.first_name,
+          u.last_name,
+          u.phone
+        FROM messages AS m
+          JOIN users as u ON m.to_username = u.username
+        WHERE from_username = $1`,
+      [username]
+    );
+
+    const mappedResults = result.rows.map((r) => {
+      return {
+        id: r.id,
+        to_user: {
+          username: r.username,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          phone: r.phone,
+        },
+        body: r.body,
+        sent_at: r.sent_at,
+        read_at: r.read_at,
+      };
+    });
+
+    return mappedResults;
   }
 
   /** Return messages to this user.
@@ -131,8 +167,38 @@ class User {
    */
 
   static async messagesTo(username) {
+    const result = await db.query(
+      `SELECT m.id,
+        m.body,
+        m.sent_at,
+        m.read_at,
+        u.username,
+        u.first_name,
+        u.last_name,
+        u.phone
+      FROM messages AS m
+        JOIN users as u ON m.from_username = u.username
+      WHERE to_username = $1`,
+      [username]
+    );
+
+    const mappedResults = result.rows.map((r) => {
+      return {
+        id: r.id,
+        from_user: {
+          username: r.username,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          phone: r.phone,
+        },
+        body: r.body,
+        sent_at: r.sent_at,
+        read_at: r.read_at,
+      };
+    });
+
+    return mappedResults;
   }
 }
-
 
 module.exports = User;

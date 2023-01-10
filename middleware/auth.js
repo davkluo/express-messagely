@@ -56,10 +56,6 @@ function ensureCorrectUser(req, res, next) {
 async function ensureToOrFromUser(req, res, next) {
   const message = await Message.get(req.params.id);
 
-  console.log("message.to_user.username", message.to_user.username);
-  console.log("message.from_user.username", message.from_user.username);
-  console.log("res.locals.user.username", res.locals.user.username);
-
   try {
     if (
       !res.locals.user ||
@@ -75,6 +71,7 @@ async function ensureToOrFromUser(req, res, next) {
   }
 }
 
+/** Middleware: Requires user to be the message recipient */
 async function ensureRecipient(req, res, next) {
   const message = await Message.get(req.params.id);
   try {

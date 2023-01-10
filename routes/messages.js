@@ -2,6 +2,8 @@
 
 const { BadRequestError } = require("../expressError");
 const { ensureLoggedIn, ensureToOrFromUser, ensureRecipient } = require("../middleware/auth");
+const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_PHONE, TWILIO_TO_PHONE } = require('../config');
+const client = require('twilio')(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 const Router = require("express").Router;
 const router = new Router();
@@ -25,7 +27,6 @@ router.get('/:id', ensureToOrFromUser, async function (req, res, next) {
 
   return res.json({ message });
 });
-//TODO: Should we make two queries to get the message? (in middleware and route handler)
 
 /** POST / - post message.
  *
@@ -41,6 +42,15 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
     body: req.body.body,
   };
   const message = await Message.create(msgInput);
+
+  client.messages
+  .create({
+     body: `${message.from_username} says to ${message.to_username}: ${message.body}`,
+     from: `${TWILIO_FROM_PHONE}`,
+     to: `${TWILIO_TO_PHONE}`
+   })
+  .then(message => console.log(message.sid));
+
   return res.json({ message });
 });
 

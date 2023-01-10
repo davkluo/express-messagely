@@ -17,7 +17,8 @@
     "express-cors": "*",
     "jsonwebtoken": "*",
     "pg": "*",
-    "supertest": "*"
+    "supertest": "*",
+    "twilio": "^3.84.0"
   },
   "repository": {
     "type": "git",

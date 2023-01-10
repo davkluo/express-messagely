@@ -9,6 +9,9 @@ const router = new Router();
  * => {users: [{username, first_name, last_name}, ...]}
  *
  **/
+router.get('/', function(req, res, next) {
+  // Will need authentication and authorization (any user will do)
+});
 
 
 /** GET /:username - get detail of users.
@@ -16,7 +19,9 @@ const router = new Router();
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  *
  **/
-
+router.get('/:username', function(req, res, next) {
+  // Will need authentication and authorization2
+});
 
 /** GET /:username/to - get messages to user
  *
@@ -27,7 +32,9 @@ const router = new Router();
  *                 from_user: {username, first_name, last_name, phone}}, ...]}
  *
  **/
-
+router.get('/:username/to', function(req, res, next) {
+  // Will need authentication and authorization2
+});
 
 /** GET /:username/from - get messages from user
  *
@@ -38,5 +45,8 @@ const router = new Router();
  *                 to_user: {username, first_name, last_name, phone}}, ...]}
  *
  **/
+router.get('/:username/from', function(req, res, next) {
+  // Will need authentication and authorization2 (bit more involved, have to check for specific user)
+});
 
 module.exports = router;

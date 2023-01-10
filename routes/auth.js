@@ -13,7 +13,7 @@ router.post('/login', async function(req, res, next) {
   if (req.body === undefined) throw new BadRequestError();
   const { username, password } = req.body;
 
-  if ((await User.authenticate(username, password)) === true) { // Is this what Elie meant
+  if ((await User.authenticate(username, password)) === true) {
     User.updateLoginTimestamp(username);
     const payload = { username };
     const token = jwt.sign(payload, SECRET_KEY);
